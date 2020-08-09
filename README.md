@@ -18,8 +18,13 @@ Python 3 and linux are recommended to avoid bugs.
 
 
 Usage example:
+
 >python
+
 import uedge_mvu.utils as mu
+
 import uedge_mvu.plot as mp
+
 mu.paws()
+
 mp.plotmesh()
