@@ -36,3 +36,64 @@ def plotmesh(iso=True, xlim=None, ylim=None, show=True):
         plt.ylim(ylim)
     if show:
         plt.show()
+
+
+
+def plotvar(var, iso=True, vmin=None, vmax=None, title="UEDGE data"):
+    
+    patches = []
+
+    for iy in np.arange(0,com.ny+2):
+        for ix in np.arange(0,com.nx+2):
+            rcol=com.rm[ix,iy,[1,2,4,3]]
+            zcol=com.zm[ix,iy,[1,2,4,3]]
+            rcol.shape=(4,1)
+            zcol.shape=(4,1)
+            polygon = Polygon(np.column_stack((rcol,zcol)), True)
+            patches.append(polygon)
+
+    #-is there a better way to cast input data into 2D array?
+    vals=np.zeros((com.nx+2)*(com.ny+2))
+
+    for iy in np.arange(0,com.ny+2):
+        for ix in np.arange(0,com.nx+2):
+            k=ix+(com.nx+2)*iy
+            vals[k] = var[ix,iy]
+
+
+     # Set vmin and vmax disregarding guard cells
+    if not vmax:
+        vmax = np.max(var)
+    if not vmin:
+        vmin = np.min(var)
+
+
+    
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    ###p = PatchCollection(patches, cmap=cmap, norm=norm)
+    p = PatchCollection(patches, norm=norm)
+    p.set_array(np.array(vals))
+
+
+
+
+    fig,ax = plt.subplots(1)
+
+    ax.add_collection(p)
+    ax.autoscale_view()
+    plt.colorbar(p)
+
+    if iso:
+        plt.axis('equal')  # regular aspect-ratio
+    
+    fig.suptitle(title)
+    plt.xlabel('R [m]')
+    plt.ylabel('Z [m]')
+    plt.grid(True)
+
+    #if (iso):
+    #    plt.axes().set_aspect('equal', 'datalim')
+    #else:
+    #    plt.axes().set_aspect('auto', 'datalim')
+
+    plt.show()
