@@ -15,7 +15,7 @@ from uedge import __version__ as uedgeVersion
 
 
 
-def plotmesh(iso=True, xlim=None, ylim=None, show=True):
+def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, show=True):
     fig,ax = plt.subplots(1)
     if (iso):
         plt.axes().set_aspect('equal', 'datalim')
@@ -24,7 +24,7 @@ def plotmesh(iso=True, xlim=None, ylim=None, show=True):
     for iy in np.arange(0,com.ny+2):
         for ix in np.arange(0,com.nx+2):
             plt.plot(com.rm[ix,iy,[1,2,4,3,1]],
-                     com.zm[ix,iy,[1,2,4,3,1]], 
+                     com.zm[ix,iy,[1,2,4,3,1]]+zshift, 
                      color="black", linewidth=0.5)
     plt.xlabel('R [m]')
     plt.ylabel('Z [m]')
@@ -39,14 +39,14 @@ def plotmesh(iso=True, xlim=None, ylim=None, show=True):
 
 
 
-def plotvar(var, iso=True, vmin=None, vmax=None, title="UEDGE data"):
+def plotvar(var, zshift=0.0, iso=True, vmin=None, vmax=None, title="UEDGE data"):
     
     patches = []
 
     for iy in np.arange(0,com.ny+2):
         for ix in np.arange(0,com.nx+2):
             rcol=com.rm[ix,iy,[1,2,4,3]]
-            zcol=com.zm[ix,iy,[1,2,4,3]]
+            zcol=com.zm[ix,iy,[1,2,4,3]]+zshift
             rcol.shape=(4,1)
             zcol.shape=(4,1)
             polygon = Polygon(np.column_stack((rcol,zcol)), True)
@@ -95,5 +95,37 @@ def plotvar(var, iso=True, vmin=None, vmax=None, title="UEDGE data"):
     #    plt.axes().set_aspect('equal', 'datalim')
     #else:
     #    plt.axes().set_aspect('auto', 'datalim')
+
+    plt.show()
+
+
+
+
+def plotrprof(v, ixcut=-1, title="UEDGE data", lines=True, dots=False):
+    # Plotting radial profiles of UEDGE data
+    #
+    # Usage example:
+    # plotrprof(bbb.te/ev, title="Te [eV]")
+    # plotrprof(ni[:,:,1], title="Nn [m-3]")
+    #==================================#
+    
+    fig,ax = plt.subplots(1)
+
+    if (ixcut<0):
+        ix0=bbb.ixmp
+    else:
+        ix0=ixcut
+        
+
+    if (lines):
+        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],v[ix0,:])
+    
+    if (dots):
+        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],v[ix0,:],"o")
+
+        
+    plt.xlabel('R-Rsep [m]')
+    fig.suptitle(title)
+    plt.grid(True)
 
     plt.show()
