@@ -101,7 +101,7 @@ def plotvar(var, zshift=0.0, iso=True, vmin=None, vmax=None, title="UEDGE data")
 
 
 
-def plotrprof(v, ixcut=-1, title="UEDGE data", lines=True, dots=False):
+def plotrprof(var, ixcut=-1, title="UEDGE data", lines=True, dots=False, xlim=None, ylim=None):
     # Plotting radial profiles of UEDGE data
     #
     # Usage example:
@@ -115,14 +115,20 @@ def plotrprof(v, ixcut=-1, title="UEDGE data", lines=True, dots=False):
         ix0=bbb.ixmp
     else:
         ix0=ixcut
+
         
 
     if (lines):
-        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],v[ix0,:])
+        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:])
     
     if (dots):
-        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],v[ix0,:],"o")
+        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:],"o")
+        
+    if xlim:
+        plt.xlim(xlim)
 
+    if ylim:
+        plt.ylim(ylim)
         
     plt.xlabel('R-Rsep [m]')
     fig.suptitle(title)
