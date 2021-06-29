@@ -15,31 +15,40 @@ from uedge import __version__ as uedgeVersion
 
 
 
-def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, show=True):
+def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, yinv=False, show=True):
+
     fig,ax = plt.subplots(1)
+
     if (iso):
         plt.axes().set_aspect('equal', 'datalim')
     else:
         plt.axes().set_aspect('auto', 'datalim')
+
     for iy in np.arange(0,com.ny+2):
         for ix in np.arange(0,com.nx+2):
             plt.plot(com.rm[ix,iy,[1,2,4,3,1]],
                      com.zm[ix,iy,[1,2,4,3,1]]+zshift, 
                      color="black", linewidth=0.5)
+            
     plt.xlabel('R [m]')
     plt.ylabel('Z [m]')
-    fig.suptitle('UEDGE mesh')
+    fig.suptitle('UEDGE grid')
     plt.grid(False)
+
     if xlim:
         plt.xlim(xlim)
     if ylim:
         plt.ylim(ylim)
+
+    if yinv:
+        plt.gca().invert_yaxis()
+        
     if show:
         plt.show()
 
 
 
-def plotvar(var, zshift=0.0, iso=True, vmin=None, vmax=None, title="UEDGE data"):
+def plotvar(var, zshift=0.0, iso=True, grid=False, label=None, vmin=None, vmax=None, yinv=False, title="UEDGE data"):
     
     patches = []
 
@@ -81,7 +90,7 @@ def plotvar(var, zshift=0.0, iso=True, vmin=None, vmax=None, title="UEDGE data")
 
     ax.add_collection(p)
     ax.autoscale_view()
-    plt.colorbar(p)
+    plt.colorbar(p, label=label)
 
     if iso:
         plt.axis('equal')  # regular aspect-ratio
@@ -89,8 +98,13 @@ def plotvar(var, zshift=0.0, iso=True, vmin=None, vmax=None, title="UEDGE data")
     fig.suptitle(title)
     plt.xlabel('R [m]')
     plt.ylabel('Z [m]')
-    plt.grid(True)
 
+    if grid:
+        plt.grid(True)
+
+    if yinv:
+        plt.gca().invert_yaxis()
+        
     #if (iso):
     #    plt.axes().set_aspect('equal', 'datalim')
     #else:
