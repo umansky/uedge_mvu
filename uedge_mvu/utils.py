@@ -7,7 +7,8 @@ import numpy as np
 #import shapely.geometry
 from uedge import bbb, com, flx, grd, svr
 
-def paws():
+def paws(message=""):
+    print(message)
     input("Press the <ENTER> key to continue...")
 
 
