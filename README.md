@@ -4,6 +4,9 @@
 
 ##-Check out from github:
 git clone https://github.com/umansky/uedge_mvu
+or
+git clone ssh://git@github.com/umansky/uedge_mvu
+
 
 ##-Install:
 Set up uedge_mvu as a package by running the following command inside the directory containing `setup.py`:
