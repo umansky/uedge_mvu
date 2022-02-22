@@ -1,7 +1,7 @@
 from fortranformat import FortranRecordWriter
 import re
 import numpy as np
-from uedge import bbb, grd
+from uedge import bbb, com, grd
 
 
 def import_field(fp,nxm,nym):
@@ -75,6 +75,9 @@ def idlg_read(fname="gridue"):
     columns=line.split()
     nxm=int(columns[0])
     nym=int(columns[1])
+    ixpt1=int(columns[2])
+    ixpt2=int(columns[3])
+    iysptrx1=int(columns[4])
     
 
     #import data, one field at a time
@@ -87,23 +90,26 @@ def idlg_read(fname="gridue"):
     bphi=import_field(f,nxm,nym)
     b=import_field(f,nxm,nym)
 
+
     #import runid
     line=f.readline()
     print("runid:",line)
 
     f.close()
 
-    return rm,zm,psi,br,bz,bpol,bphi,b
+    return rm,zm,psi,br,bz,bpol,bphi,b,nxm,nym,ixpt1,ixpt2,iysptrx1
 
 
-def idlg_write(rm,zm,psi,br,bz,bpol,bphi,b, fname="gridue.cp", runid="runid", nxm=0, nym=0):
+
+def idlg_write(rm,zm,psi,br,bz,bpol,bphi,b, fname="gridue.cp", runid="runid", 
+               nxm=0, nym=0, ixpt1=0, ixpt2=0, iysptrx1=0):
     print("In idealgrid: idlg_write()")
 
     print("Exporting data to ", fname)
     f = open(fname, 'w')
 
-    frw = FortranRecordWriter('(I15,I15)')
-    headerline = frw.write([nxm,nym])+"\n"
+    frw = FortranRecordWriter('(I4,I4,I4,I4,I4)')
+    headerline = frw.write([nxm,nym,ixpt1,ixpt2,iysptrx1])+"\n"
 
     f.write(headerline)
 
@@ -119,3 +125,95 @@ def idlg_write(rm,zm,psi,br,bz,bpol,bphi,b, fname="gridue.cp", runid="runid", nx
     f.write("\n"+runid)
 
     f.close()
+
+
+
+def idlg_modrad(jymin=0, jymax=1, alfyt=0.0):
+    #-modify radial grid in a selected jy range
+
+    print("Modifying radial grid...")
+
+    #-range of affected radial cells (need at least two cells)
+    ncell=jymax-jymin+1
+
+    #-radial range for selected jy
+    rmin=com.rm[0,jymin,1]
+    rmax=com.rm[0,jymax,3]
+    ##deltar=rmax-rmin
+
+    #-calculate radial locations of vertices
+    if (np.abs(alfyt) <= 1e-3):
+        #-uniform
+        rr=rmin + (rmax-rmin)*(np.arange(ncell+1))/(ncell)
+    else:
+        #-exponential
+        rr=rmin + (rmax-rmin)*(np.exp(alfyt*(np.arange(ncell+1)))-1.0)/(np.exp(alfyt*(ncell))-1.0)
+
+
+    for ix in range(com.nxm+2):
+        com.rm[ix,jymin:jymax+1,1]=rr[0:ncell]
+        com.rm[ix,jymin:jymax+1,2]=rr[0:ncell]
+        com.rm[ix,jymin:jymax+1,3]=rr[1:ncell+1]
+        com.rm[ix,jymin:jymax+1,4]=rr[1:ncell+1]
+        com.rm[ix,jymin:jymax+1,0]=0.5*(rr[0:ncell]+rr[1:ncell+1])
+
+
+
+def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0):
+    #-modify poloidal grid in selected ix range [ixmin,ixmax]
+
+    print("Modifying poloidal grid...")
+
+    if (np.abs(alfxt)>1.99):
+        print("must have abs(alfxt)<2!")
+
+    #-range of affected poloidal cells
+    ncell=ixmax-ixmin+1
+
+    #-range of poloidal coordinate (implies ixmax>=ixmin?)
+    zmin=com.zm[ixmin,0,1]
+    zmax=com.zm[ixmax,0,2]
+
+    ##print("Poloidal index range", ixmin, ixmax)
+    ##print("Poloidal coordinate range", zmin, zmax)
+
+
+    if (np.abs(alfxt)<1e-3):
+        #-uniform spacing
+        zz=zmin + (zmax-zmin)*(np.arange(ncell+1))/(ncell)
+    else:
+        ##zz=zmin + 0.5*(zmax-zmin)*(1.0+np.tanh(alfxt*((1.0*np.arange(ncell+1)/ncell)-0.5))/np.tanh(alfxt*0.5))
+        zz=zmin + 0.5*(zmax-zmin)*(1.0+np.arctanh(alfxt*((1.0*np.arange(ncell+1)/ncell)-0.5))/np.arctanh(alfxt*0.5))
+
+    ##print("Poloidal vertices: ", zz)    
+
+    for jy in range(com.nym+2):
+        com.zm[ixmin:ixmax+1,jy,1]=zz[0:ncell]
+        com.zm[ixmin:ixmax+1,jy,3]=zz[0:ncell]
+        com.zm[ixmin:ixmax+1,jy,2]=zz[1:ncell+1]
+        com.zm[ixmin:ixmax+1,jy,4]=zz[1:ncell+1]
+        com.zm[ixmin:ixmax+1,jy,0]=0.5*(zz[0:ncell]+zz[1:ncell+1])
+
+
+
+def idlg_setb():
+    #-fix the magnetic field for modified grid
+
+    btorfix=sqrt(btfix**2-bpolfix**2)
+
+    for k in range(5):
+        for ix in range(com.nxm+2):
+            for jy in range(com.nym+2):                
+                com.bphi[ix,jy,k] = grd.btorfix*(rm[ix,jy,k]/rmajfix)**grd.sigma_btor
+                com.bpol[ix,jy,k] = grd.bpolfix*(rm[ix,jy,k]/rmajfix)**grd.sigma_bpol
+                com.b[ix,jy,k]    = sqrt(bphi[ix,jy,k]**2 + bpol[ix,jy,k]**2)
+
+                ##-Note: poloidal flux per radian, correct only for cylindrical case
+                com.psi[ix,jy,k]  = ((grd.bpolfix*grd.rmajfix**2)/(grd.sigma_bpol+2))*(rm[ix,jy,k]/grd.rmajfix)**(grd.sigma_bpol+2)
+
+                com.br[ix,jy,k] = 0.
+                com.bz[ix,jy,k] = - bpol [ix,jy,k]
+
+
+
+
