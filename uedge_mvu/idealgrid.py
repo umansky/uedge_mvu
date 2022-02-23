@@ -159,7 +159,7 @@ def idlg_modrad(jymin=0, jymax=1, alfyt=0.0):
 
 
 
-def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0):
+def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False):
     #-modify poloidal grid in selected ix range [ixmin,ixmax]
 
     print("Modifying poloidal grid...")
@@ -182,8 +182,13 @@ def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0):
         #-uniform spacing
         zz=zmin + (zmax-zmin)*(np.arange(ncell+1))/(ncell)
     else:
-        ##zz=zmin + 0.5*(zmax-zmin)*(1.0+np.tanh(alfxt*((1.0*np.arange(ncell+1)/ncell)-0.5))/np.tanh(alfxt*0.5))
         zz=zmin + 0.5*(zmax-zmin)*(1.0+np.arctanh(alfxt*((1.0*np.arange(ncell+1)/ncell)-0.5))/np.arctanh(alfxt*0.5))
+
+
+    if (smoothe):
+        zz_lin = zmin + (zmax-zmin)*(np.arange(ncell+1))/(ncell)
+        zz[1]=0.5*(zz[1]+zz_lin[1])
+        zz[ncell-1]=0.5*(zz[ncell-1]+zz_lin[ncell-1])
 
     ##print("Poloidal vertices: ", zz)    
 
@@ -199,21 +204,20 @@ def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0):
 def idlg_setb():
     #-fix the magnetic field for modified grid
 
-    btorfix=sqrt(btfix**2-bpolfix**2)
+    print("Setting magnetic field on the grid")
+
+    btorfix=np.sqrt(grd.btfix**2-grd.bpolfix**2)
 
     for k in range(5):
         for ix in range(com.nxm+2):
             for jy in range(com.nym+2):                
-                com.bphi[ix,jy,k] = grd.btorfix*(rm[ix,jy,k]/rmajfix)**grd.sigma_btor
-                com.bpol[ix,jy,k] = grd.bpolfix*(rm[ix,jy,k]/rmajfix)**grd.sigma_bpol
-                com.b[ix,jy,k]    = sqrt(bphi[ix,jy,k]**2 + bpol[ix,jy,k]**2)
+                com.bphi[ix,jy,k] = btorfix*(com.rm[ix,jy,k]/grd.rmajfix)**grd.sigma_btor
+                com.bpol[ix,jy,k] = grd.bpolfix*(com.rm[ix,jy,k]/grd.rmajfix)**grd.sigma_bpol
+                com.b[ix,jy,k]    = np.sqrt(com.bphi[ix,jy,k]**2 + com.bpol[ix,jy,k]**2)
 
                 ##-Note: poloidal flux per radian, correct only for cylindrical case
-                com.psi[ix,jy,k]  = ((grd.bpolfix*grd.rmajfix**2)/(grd.sigma_bpol+2))*(rm[ix,jy,k]/grd.rmajfix)**(grd.sigma_bpol+2)
+                com.psi[ix,jy,k]  = ((grd.bpolfix*grd.rmajfix**2)/(grd.sigma_bpol+2))*(com.rm[ix,jy,k]/grd.rmajfix)**(grd.sigma_bpol+2)
 
                 com.br[ix,jy,k] = 0.
-                com.bz[ix,jy,k] = - bpol [ix,jy,k]
-
-
-
+                com.bz[ix,jy,k] = - com.bpol[ix,jy,k]
 
