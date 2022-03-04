@@ -63,7 +63,7 @@ def export_field(fp, nxm, nym, fdata):
 
 
 
-def idlg_read(fname="gridue"):
+def idlg_Read(fname="gridue"):
 
     print("In idealgrid: idlg_read()")
     print("Importing data from ", fname)
@@ -101,26 +101,28 @@ def idlg_read(fname="gridue"):
 
 
 
-def idlg_write(rm,zm,psi,br,bz,bpol,bphi,b, fname="gridue.cp", runid="runid", 
-               nxm=0, nym=0, ixpt1=0, ixpt2=0, iysptrx1=0):
-    print("In idealgrid: idlg_write()")
+def idlg_Write(fname="gridue", runid="runid"):
+    ##-saving UEDGE geometry and magnetic data in gridue file-##
 
+    print("In idealgrid: idlg_write()")
     print("Exporting data to ", fname)
+
+
     f = open(fname, 'w')
 
     frw = FortranRecordWriter('(I4,I4,I4,I4,I4)')
-    headerline = frw.write([nxm,nym,ixpt1,ixpt2,iysptrx1])+"\n"
+    headerline = frw.write([com.nxm,com.nym,com.ixpt1[0],com.ixpt2[0],com.iysptrx1[0]])+"\n"
 
     f.write(headerline)
 
-    export_field(f,nxm,nym,rm)
-    export_field(f,nxm,nym,zm)
-    export_field(f,nxm,nym,psi)
-    export_field(f,nxm,nym,br)
-    export_field(f,nxm,nym,bz)
-    export_field(f,nxm,nym,bpol)
-    export_field(f,nxm,nym,bphi)
-    export_field(f,nxm,nym,b)
+    export_field(f, com.nxm, com.nym, com.rm)
+    export_field(f, com.nxm, com.nym, com.zm)
+    export_field(f, com.nxm, com.nym, com.psi)
+    export_field(f, com.nxm, com.nym, com.br)
+    export_field(f, com.nxm, com.nym, com.bz)
+    export_field(f, com.nxm, com.nym, com.bpol)
+    export_field(f, com.nxm, com.nym, com.bphi)
+    export_field(f, com.nxm, com.nym, com.b)
 
     f.write("\n"+runid)
 
@@ -128,8 +130,8 @@ def idlg_write(rm,zm,psi,br,bz,bpol,bphi,b, fname="gridue.cp", runid="runid",
 
 
 
-def idlg_modrad(jymin=0, jymax=1, alfyt=0.0):
-    #-modify radial grid in a selected jy range
+def idlg_ModRad(jymin=0, jymax=1, alfyt=0.0):
+    ##-modify radial grid in a selected jy range-##
 
     print("Modifying radial grid...")
 
@@ -157,10 +159,12 @@ def idlg_modrad(jymin=0, jymax=1, alfyt=0.0):
         com.rm[ix,jymin:jymax+1,4]=rr[1:ncell+1]
         com.rm[ix,jymin:jymax+1,0]=0.5*(rr[0:ncell]+rr[1:ncell+1])
 
+    #-update B field on the grid
+    idlg_SetB()
 
 
-def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False):
-    #-modify poloidal grid in selected ix range [ixmin,ixmax]
+def idlg_ModPol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False, debug=False):
+    ##-modify poloidal grid in selected ix range [ixmin,ixmax]-##
 
     print("Modifying poloidal grid...")
 
@@ -174,8 +178,9 @@ def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False):
     zmin=com.zm[ixmin,0,1]
     zmax=com.zm[ixmax,0,2]
 
-    ##print("Poloidal index range", ixmin, ixmax)
-    ##print("Poloidal coordinate range", zmin, zmax)
+    if debug:
+        print("Poloidal index range", ixmin, ixmax)
+        print("Poloidal coordinate range", zmin, zmax)
 
 
     if (np.abs(alfxt)<1e-3):
@@ -190,7 +195,9 @@ def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False):
         zz[1]=0.5*(zz[1]+zz_lin[1])
         zz[ncell-1]=0.5*(zz[ncell-1]+zz_lin[ncell-1])
 
-    ##print("Poloidal vertices: ", zz)    
+    if debug:
+        print("Poloidal vertices: ", zz)    
+
 
     for jy in range(com.nym+2):
         com.zm[ixmin:ixmax+1,jy,1]=zz[0:ncell]
@@ -199,9 +206,13 @@ def idlg_modpol(ixmin=0, ixmax=0, alfxt=0.0, smoothe=False):
         com.zm[ixmin:ixmax+1,jy,4]=zz[1:ncell+1]
         com.zm[ixmin:ixmax+1,jy,0]=0.5*(zz[0:ncell]+zz[1:ncell+1])
 
+    #-update B field on the grid
+    idlg_SetB()
 
 
-def idlg_setb():
+
+
+def idlg_SetB():
     #-fix the magnetic field for modified grid
 
     print("Setting magnetic field on the grid")
