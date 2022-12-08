@@ -122,7 +122,7 @@ def plotvar(var, zshift=0.0, iso=True, grid=False, label=None, vmin=None, vmax=N
 
 
 
-def plotrprof(var, ixcut=-1, title="UEDGE data", subtitle=None, lines=True, dots=False, xlim=None, ylim=None, xlog=False, ylog=False, show=True):
+def plotrprof(var, ix=-1, use_psin=False, title="UEDGE data", subtitle=None, lines=True, dots=False, xlim=None, ylim=None, xlog=False, ylog=False, show=True):
     # Plotting radial profiles of UEDGE data
     #
     # Usage example:
@@ -132,18 +132,29 @@ def plotrprof(var, ixcut=-1, title="UEDGE data", subtitle=None, lines=True, dots
     
     fig,ax = plt.subplots(1)
 
-    if (ixcut<0):
+    if (ix<0):
         ix0=bbb.ixmp
     else:
-        ix0=ixcut
+        ix0=ix
 
+    if (use_psin):
+        psin=(com.psi-com.simagx)/(com.sibdry-com.simagx)
+        xcoord=psin[ix0,:,0]
+        xlabel='Psi_norm'
+    else:
+        ###xcoord=com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0]
+        xcoord=com.rm[bbb.ixmp,:,0]-com.rm[bbb.ixmp,com.iysptrx,0]
+        xlabel='rho=R-Rsep [m]'
         
 
     if (lines):
-        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:])
+        ##plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:])
+        plt.plot(xcoord, var[ix0,:])
     
     if (dots):
-        plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:],"o")
+        ##plt.plot(com.rm[ix0,:,0]-com.rm[ix0,com.iysptrx,0],var[ix0,:],"o")
+        plt.plot(xcoord, var[ix0,:],"o")
+
         
     if xlim:
         plt.xlim(xlim)
@@ -157,7 +168,7 @@ def plotrprof(var, ixcut=-1, title="UEDGE data", subtitle=None, lines=True, dots
     if xlog:
         plt.xscale('log')
         
-    plt.xlabel('R-Rsep [m]')
+    plt.xlabel(xlabel)
     fig.suptitle(title)
     ax.set_title(subtitle, loc="right")
     plt.grid(True)
@@ -168,6 +179,61 @@ def plotrprof(var, ixcut=-1, title="UEDGE data", subtitle=None, lines=True, dots
 
 
 
+
+
+
+def plotpprof(var, ir=-1, parallel=False, title="UEDGE data", xlog=False, ylog=False,
+              subtitle=None, lines=True, dots=False, xlim=None, ylim=None, show=True):
+
+
+    fig,ax = plt.subplots(1)
+
+    
+    if (ir<0):
+        ir=com.ny+1
+    
+    if parallel:
+        #-parallel length
+        x=np.cumsum(com.dx[:,ir]/com.rr[:,ir])
+        xlabel="lpar [m]"
+    else:
+        #-poloidal length
+        x=np.cumsum(com.dx[:,ir])
+        xlabel="lpol [m]"
+    
+
+    if (lines):
+        plt.plot(x, var[:,ir])
+        
+    if (dots):
+        plt.plot(x, var[:,ir],"o")
+
+        
+    if xlim:
+        plt.xlim(xlim)
+
+    if ylim:
+        plt.ylim(ylim)
+
+    if ylog:
+        plt.yscale('log')
+
+    if xlog:
+        plt.xscale('log')
+
+
+    plt.xlabel(xlabel)
+    fig.suptitle(title)
+    ax.set_title(subtitle, loc="right")
+    plt.grid(True)
+    
+
+    if show:
+        plt.show()
+
+
+
+        
 
         
 def show_flow(vx, vy, scale=1.0, ispec=0, color="red", xlim=None, ylim=None, title=None, subtitle=None):
