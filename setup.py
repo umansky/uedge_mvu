@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
 import setuptools
-
 
 setuptools.setup(
     name='uedge_mvu',
