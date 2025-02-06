@@ -15,7 +15,8 @@ from uedge import __version__ as uedgeVersion
 
 
 
-def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, yinv=False, title="UEDGE grid", subtitle=None, show=True):
+def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, wsepx=False,
+             yinv=False, title="UEDGE grid", subtitle=None, show=True):
 
     #fig,ax = plt.subplots(1)
 
@@ -45,6 +46,45 @@ def plotmesh(iso=True, zshift=0.0, xlim=None, ylim=None, yinv=False, title="UEDG
     if ylim:
         plt.ylim(ylim)
 
+
+
+    if wsepx:
+        #-construct the separatrix
+
+        #-add western corner at the western guard cell
+        rs=np.array(com.rm[0,com.iysptrx1,3])
+        zs=np.array(com.zm[0,com.iysptrx1,3])
+
+        for i in range(1,com.nxm+1):
+            #-add western corner of each cell
+            rs=np.append(rs,com.rm[i,com.iysptrx1,3])
+            zs=np.append(zs,com.zm[i,com.iysptrx1,3])
+
+        for i in range(com.nxm,com.nxm+2):
+            #-add eastern corner
+            rs=np.append(rs,com.rm[i,com.iysptrx1,4])
+            zs=np.append(zs,com.zm[i,com.iysptrx1,4])        
+
+        plt.plot(rs,zs, "r")
+        plt.plot(rs[com.ixpt1+1],zs[com.ixpt1+1],"or")
+        plt.plot(rs[com.ixpt2+1],zs[com.ixpt2+1],"or")
+
+
+        #-radial line through xpt1
+        rxpt1=np.array(com.rm[com.ixpt1+1,0:com.nym+1,3])
+        zxpt1=np.array(com.zm[com.ixpt1+1,0:com.nym+1,3])
+        
+        #-radial line through xpt2
+        rxpt2=np.array(com.rm[com.ixpt2+1,0:com.nym+1,3])
+        zxpt2=np.array(com.zm[com.ixpt2+1,0:com.nym+1,3])
+
+        plt.plot(rxpt1,zxpt1, ".g")
+        plt.plot(rxpt2,zxpt2, ".b")
+        plt.plot(rxpt1,zxpt1, "g") #-line not showing?
+        plt.plot(rxpt2,zxpt2, "b") #-line not showing?
+
+
+        
     if yinv:
         plt.gca().invert_yaxis()
         
@@ -63,7 +103,8 @@ def plotvar(var, zshift=0.0, iso=True, grid=False, label=None, vmin=None, vmax=N
             zcol=com.zm[ix,iy,[1,2,4,3]]+zshift
             rcol.shape=(4,1)
             zcol.shape=(4,1)
-            polygon = Polygon(np.column_stack((rcol,zcol)), True)
+            ###polygon = Polygon(np.column_stack((rcol,zcol)), True)
+            polygon = Polygon(np.column_stack((rcol,zcol)))
             patches.append(polygon)
 
     #-is there a better way to cast input data into 2D array?
